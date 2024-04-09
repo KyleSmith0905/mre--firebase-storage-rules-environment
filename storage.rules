@@ -1,12 +1,45 @@
 rules_version = '2';
 
 // Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if false;
+    // Firestore rules for fine-grained permissions.
+    // We can (hopefully) take advantage of Firestore Rules caching requests.
+    function getPermissions() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)/meta/permissions).data;
+    }
+
+    function isAdmin() {
+      return (
+        'site' in request.auth.token && request.auth.token.site == 'admin'
+      ) || (
+        getPermissions().admin == true
+      )
+    }
+
+    match /meta/blocked-user.svg {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /example-path/{pathId} {
+      function retrievePath() {
+        return firestore.get(/databases/(default)/documents/example-path/$(pathId)).data;
+      }
+
+    	match /{file} {
+        allow read: if true;
+        allow write: if isAdmin() || isAdmin() || isAdmin() || retrievePath().userId == 'not-valid' || retrievePath().userId == '123abc';
+      }
+
+      match /nested/{commentId} {
+        // We can move temporary images into a folder if we want,
+        // would be nice if this is as strict as possible though.
+        match /image {
+          allow read: if false;
+          allow write: if true;
+        }
+      }
     }
   }
 }

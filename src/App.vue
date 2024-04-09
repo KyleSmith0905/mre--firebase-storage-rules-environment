@@ -1,47 +1,34 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { doc, setDoc } from 'firebase/firestore';
+import { ref as storageRef } from 'firebase/storage'
+import { ref } from 'vue';
+import { useStorageFile } from 'vuefire'
+import { storage } from './firebase';
+import { firestore } from './firebase';
+
+const fileRef = ref<HTMLInputElement>();
+const exampleFileRef = storageRef(storage, 'example-path/abc123/file')
+
+const { upload } = useStorageFile(exampleFileRef)
+
+const uploadPicture = () => {
+  const file = fileRef.value?.files?.item(0)
+  if (file) {
+    upload(file)
+  }
+}
+
+const createDocument = async () => {
+  await setDoc(doc(firestore, 'example-path', 'abc123'), {
+    userId: '123abc'
+  })
+}
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  <button @click="createDocument()">Create Necessary Document</button>
+  <hr/>
+  <p>Check network/console tab to see if upload works or fails, sorry.</p>
+  <input type="file" ref="fileRef"/>
+  <button @click="uploadPicture()">Submit</button>
 </template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
